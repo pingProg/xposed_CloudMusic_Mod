@@ -24,6 +24,12 @@
         <meta-data
             android:name="xposedminversion"
             android:value="89" />
+
+        <!-- 声明 Content Provider -->
+        <provider
+            android:name=".DataContentProvider"
+            android:authorities="com.ping.cloudmusicmod.provider"
+            android:exported="true" />
     </application>
 
 </manifest>
