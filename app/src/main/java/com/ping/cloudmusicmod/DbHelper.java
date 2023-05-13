@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CloudMusicMod.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -17,7 +17,7 @@ public class DbHelper extends SQLiteOpenHelper {
         // 创建表
         String createTableQuery = "CREATE TABLE " + DataContract.TABLE_NAME + " (" +
                 DataContract.COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                DataContract.COLUMN_KEY + " TEXT, " +
+                DataContract.COLUMN_KEY + " TEXT UNIQUE, " +
                 DataContract.COLUMN_VALUE + " TEXT)";
 
         db.execSQL(createTableQuery);
