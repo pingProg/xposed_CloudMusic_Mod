@@ -22,8 +22,8 @@ public class DataContentProvider extends ContentProvider {
 
         // 设置 URI 匹配器
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(DataContract.CONTENT_AUTHORITY, DataContract.PATH_DATA, DATA_KEY_VALUE);
-        uriMatcher.addURI(DataContract.CONTENT_AUTHORITY, DataContract.PATH_DATA + "/#", DATA_KEY_VALUE_ID);
+        uriMatcher.addURI(DataDBContract.CONTENT_AUTHORITY, DataDBContract.PATH_DATA, DATA_KEY_VALUE);
+        uriMatcher.addURI(DataDBContract.CONTENT_AUTHORITY, DataDBContract.PATH_DATA + "/#", DATA_KEY_VALUE_ID);
 
         return true;
     }
@@ -36,12 +36,12 @@ public class DataContentProvider extends ContentProvider {
         int match = uriMatcher.match(uri);
         switch (match) {
             case DATA_KEY_VALUE:
-                cursor = db.query(DataContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                cursor = db.query(DataDBContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case DATA_KEY_VALUE_ID:
-                selection = DataContract.COLUMN_ID + "=?";
+                selection = DataDBContract.COLUMN_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-                cursor = db.query(DataContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                cursor = db.query(DataDBContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -58,7 +58,7 @@ public class DataContentProvider extends ContentProvider {
         int match = uriMatcher.match(uri);
         switch (match) {
             case DATA_KEY_VALUE:
-                long id = db.insert(DataContract.TABLE_NAME, null, values);
+                long id = db.insert(DataDBContract.TABLE_NAME, null, values);
                 if (id == -1) {
                     Log.e("DataContentProvider", "Failed to insert row for " + uri);
                     return null;
@@ -77,15 +77,15 @@ public class DataContentProvider extends ContentProvider {
         int match = uriMatcher.match(uri);
         switch (match) {
             case DATA_KEY_VALUE:
-                int rowsUpdated = db.update(DataContract.TABLE_NAME, values, selection, selectionArgs);
+                int rowsUpdated = db.update(DataDBContract.TABLE_NAME, values, selection, selectionArgs);
                 if (rowsUpdated != 0) {
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return rowsUpdated;
             case DATA_KEY_VALUE_ID:
-                selection = DataContract.COLUMN_ID + "=?";
+                selection = DataDBContract.COLUMN_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-                int rowUpdated = db.update(DataContract.TABLE_NAME, values, selection, selectionArgs);
+                int rowUpdated = db.update(DataDBContract.TABLE_NAME, values, selection, selectionArgs);
                 if (rowUpdated != 0) {
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
@@ -102,15 +102,15 @@ public class DataContentProvider extends ContentProvider {
         int match = uriMatcher.match(uri);
         switch (match) {
             case DATA_KEY_VALUE:
-                int rowsDeleted = db.delete(DataContract.TABLE_NAME, selection, selectionArgs);
+                int rowsDeleted = db.delete(DataDBContract.TABLE_NAME, selection, selectionArgs);
                 if (rowsDeleted != 0) {
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return rowsDeleted;
             case DATA_KEY_VALUE_ID:
-                selection = DataContract.COLUMN_ID + "=?";
+                selection = DataDBContract.COLUMN_ID + "=?";
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-                int rowDeleted = db.delete(DataContract.TABLE_NAME, selection, selectionArgs);
+                int rowDeleted = db.delete(DataDBContract.TABLE_NAME, selection, selectionArgs);
                 if (rowDeleted != 0) {
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
@@ -125,9 +125,9 @@ public class DataContentProvider extends ContentProvider {
         int match = uriMatcher.match(uri);
         switch (match) {
             case DATA_KEY_VALUE:
-                return DataContract.CONTENT_LIST_TYPE;
+                return DataDBContract.CONTENT_LIST_TYPE;
             case DATA_KEY_VALUE_ID:
-                return DataContract.CONTENT_ITEM_TYPE;
+                return DataDBContract.CONTENT_ITEM_TYPE;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }

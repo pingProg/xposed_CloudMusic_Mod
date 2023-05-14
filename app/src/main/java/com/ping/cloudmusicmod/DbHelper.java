@@ -15,10 +15,10 @@ public class DbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         // 创建表
-        String createTableQuery = "CREATE TABLE " + DataContract.TABLE_NAME + " (" +
-                DataContract.COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                DataContract.COLUMN_KEY + " TEXT UNIQUE, " +
-                DataContract.COLUMN_VALUE + " TEXT)";
+        String createTableQuery = "CREATE TABLE " + DataDBContract.TABLE_NAME + " (" +
+                DataDBContract.COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                DataDBContract.COLUMN_KEY + " TEXT UNIQUE, " +
+                DataDBContract.COLUMN_VALUE + " TEXT)";
 
         db.execSQL(createTableQuery);
     }
@@ -27,7 +27,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // 处理数据库升级逻辑
         // 在这个示例中，我们简单地删除旧表并重新创建新表
-        db.execSQL("DROP TABLE IF EXISTS " + DataContract.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + DataDBContract.TABLE_NAME);
         onCreate(db);
     }
 }

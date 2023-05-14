@@ -17,9 +17,23 @@ public class Hook implements IXposedHookLoadPackage {
 
         ClassLoader classLoader = loadPackageParam.classLoader;
 
+        handler_initOnStart(classLoader);
+
         handler_monitorClickFunction(classLoader);
 
         handler_monitorPlayButton(classLoader);
+    }
+
+    public void handler_initOnStart(ClassLoader classLoader) {
+        //NOTE ：监听APP初始化时调用的打印SDKCache的函数，详情查看Log的SDKCache在APP初始化时的调用时机
+        XposedHelpers.findAndHookMethod("j.l.s.f.d.b", classLoader, "a", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                LogInfo("APP初始化");
+                Data.resetData();
+            }
+        });
     }
 
     public void handler_monitorClickFunction(ClassLoader classLoader) {
@@ -47,6 +61,16 @@ public class Hook implements IXposedHookLoadPackage {
 
     public static void LogDebug(String msg) {
         Log.d("CLOUD_MUSIC_MOD", msg);
+        XposedBridge.log(msg);
+    }
+
+    public static void LogTemp(String msg) {
+        Log.d("CLOUD_MUSIC_MOD", msg);
+        XposedBridge.log(msg);
+    }
+
+    public static void LogInfo(String msg) {
+        Log.i("CLOUD_MUSIC_MOD", msg);
         XposedBridge.log(msg);
     }
 

@@ -12,7 +12,7 @@ import android.net.Uri;
 
 public class DataDB {
     public final static String DEFAULT_ERROR_STRING = "";
-    public final static Uri uri = DataContract.CONTENT_URI;
+    public final static Uri uri = DataDBContract.CONTENT_URI;
 
     public static void debugPrintAll() {
         Cursor cursor = getContext().getContentResolver().query(uri,
@@ -20,9 +20,9 @@ public class DataDB {
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
-                @SuppressLint("Range") int id = cursor.getInt(cursor.getColumnIndex(DataContract.COLUMN_ID));
-                @SuppressLint("Range") String key = cursor.getString(cursor.getColumnIndex(DataContract.COLUMN_KEY));
-                @SuppressLint("Range") String value = cursor.getString(cursor.getColumnIndex(DataContract.COLUMN_VALUE));
+                @SuppressLint("Range") int id = cursor.getInt(cursor.getColumnIndex(DataDBContract.COLUMN_ID));
+                @SuppressLint("Range") String key = cursor.getString(cursor.getColumnIndex(DataDBContract.COLUMN_KEY));
+                @SuppressLint("Range") String value = cursor.getString(cursor.getColumnIndex(DataDBContract.COLUMN_VALUE));
 
                 // 处理查询结果
                 LogDebug(String.format("ID : %d, KEY : %s, VALUE : %s", id, key, value));
@@ -34,8 +34,8 @@ public class DataDB {
     }
 
     public static boolean isKeyExist(String key) {
-        String[] projection = {DataContract.COLUMN_ID};
-        String selection = DataContract.COLUMN_KEY + " = ?";
+        String[] projection = {DataDBContract.COLUMN_ID};
+        String selection = DataDBContract.COLUMN_KEY + " = ?";
         String[] selectionArgs = {key};
 
         Cursor cursor = getContext().getContentResolver().query(
@@ -49,8 +49,8 @@ public class DataDB {
     }
 
     public static String queryValue(String key) {
-        String[] projection = {DataContract.COLUMN_VALUE};
-        String selection = DataContract.COLUMN_KEY + " = ?";
+        String[] projection = {DataDBContract.COLUMN_VALUE};
+        String selection = DataDBContract.COLUMN_KEY + " = ?";
         String[] selectionArgs = {key};
 
         Cursor cursor = getContext().getContentResolver().query(
@@ -58,7 +58,7 @@ public class DataDB {
 
         String ret;
         if (cursor != null && cursor.moveToFirst()) {
-            int valueIndex = cursor.getColumnIndex(DataContract.COLUMN_VALUE);
+            int valueIndex = cursor.getColumnIndex(DataDBContract.COLUMN_VALUE);
             ret = cursor.getString(valueIndex);
         } else {
             ret = DEFAULT_ERROR_STRING;
@@ -71,9 +71,9 @@ public class DataDB {
 
     private static boolean update(String key, String value) {
         ContentValues values = new ContentValues();
-        values.put(DataContract.COLUMN_VALUE, value);
+        values.put(DataDBContract.COLUMN_VALUE, value);
 
-        String selection = DataContract.COLUMN_KEY + " = ?";
+        String selection = DataDBContract.COLUMN_KEY + " = ?";
         String[] selectionArgs = {key};
         int rowsUpdated = getContext().getContentResolver().update(
                 uri, values, selection, selectionArgs);
@@ -83,8 +83,8 @@ public class DataDB {
 
     private static Uri insert(String key, String value) {
         ContentValues values = new ContentValues();
-        values.put(DataContract.COLUMN_KEY, key);
-        values.put(DataContract.COLUMN_VALUE, value);
+        values.put(DataDBContract.COLUMN_KEY, key);
+        values.put(DataDBContract.COLUMN_VALUE, value);
         // 数据不存在，插入新数据
         return getContext().getContentResolver().insert(uri, values);
     }
