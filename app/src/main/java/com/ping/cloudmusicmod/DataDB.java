@@ -1,7 +1,7 @@
 package com.ping.cloudmusicmod;
 
-import static com.ping.cloudmusicmod.Hook.LogDebug;
-import static com.ping.cloudmusicmod.Hook.LogError;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogError;
 
 import android.annotation.SuppressLint;
 import android.app.AndroidAppHelper;

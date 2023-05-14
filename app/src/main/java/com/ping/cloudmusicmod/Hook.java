@@ -1,6 +1,15 @@
 package com.ping.cloudmusicmod;
 
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
+
+import android.app.AndroidAppHelper;
+import android.content.Context;
+import android.media.AudioManager;
 import android.util.Log;
+import android.view.KeyEvent;
+
+import java.lang.reflect.Field;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -57,25 +66,5 @@ public class Hook implements IXposedHookLoadPackage {
                 super.beforeHookedMethod(param);
             }
         });
-    }
-
-    public static void LogDebug(String msg) {
-        Log.d("CLOUD_MUSIC_MOD", msg);
-        XposedBridge.log(msg);
-    }
-
-    public static void LogTemp(String msg) {
-        Log.d("CLOUD_MUSIC_MOD", msg);
-        XposedBridge.log(msg);
-    }
-
-    public static void LogInfo(String msg) {
-        Log.i("CLOUD_MUSIC_MOD", msg);
-        XposedBridge.log(msg);
-    }
-
-    public static void LogError(String msg) {
-        Log.e("CLOUD_MUSIC_MOD", msg);
-        XposedBridge.log(msg);
     }
 }

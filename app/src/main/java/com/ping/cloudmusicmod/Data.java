@@ -3,7 +3,8 @@ package com.ping.cloudmusicmod;
 import static com.ping.cloudmusicmod.DataDB.insertOrUpdate;
 import static com.ping.cloudmusicmod.DataDB.isKeyExist;
 import static com.ping.cloudmusicmod.DataDB.queryValue;
-import static com.ping.cloudmusicmod.Hook.LogInfo;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
+
 
 public class Data {
     public static final int REP_INIT = -1;
