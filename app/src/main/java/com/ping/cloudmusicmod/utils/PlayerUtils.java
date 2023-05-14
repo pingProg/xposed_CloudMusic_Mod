@@ -1,6 +1,7 @@
 package com.ping.cloudmusicmod.utils;
 
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 
 import android.app.AndroidAppHelper;
 import android.content.Context;
@@ -14,16 +15,16 @@ import de.robv.android.xposed.XposedHelpers;
 public class PlayerUtils {
     private static final long maxShortSongsDuration_ms = 3 * 60 * 1000;
 
-    private static void KeyPlayPause() throws Throwable {
-        LogDebug("%%%% KeyPlayPause");
+    public static void KeyPlayPause() throws Throwable {
+        LogInfo("模拟点击：开始/暂停");
         Context context = (Context) AndroidAppHelper.currentApplication();
         AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         audioManager.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
         audioManager.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
     }
 
-    private static void KeyPrevious() throws Throwable {
-        LogDebug("%%%% KeyPrevious");
+    public static void KeyPrevious() throws Throwable {
+        LogInfo("模拟点击：上一曲");
         Context context = (Context) AndroidAppHelper.currentApplication();
         AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         audioManager.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PREVIOUS));
@@ -35,7 +36,7 @@ public class PlayerUtils {
         return (int) XposedHelpers.callStaticMethod(c, "getCurrentTime");
     }
 
-    private int getDuration_ms(ClassLoader classLoader) throws Throwable {
+    private static int getDuration_ms(ClassLoader classLoader) throws Throwable {
         // NOTE : 使用反射，获取java的私有成员变量
         Class c = XposedHelpers.findClass("com.netease.cloudmusic.service.PlayService", classLoader);
         Object returnObjectOfInvoke = XposedHelpers.callStaticMethod(c, "getPlayingMusicInfo");
@@ -59,7 +60,7 @@ public class PlayerUtils {
 //        return (long) privateVariable;
 //    }
 
-    private boolean isShortSongs(ClassLoader classLoader) throws Throwable {
+    public static boolean isShortSongs(ClassLoader classLoader) throws Throwable {
         return getDuration_ms(classLoader) <= maxShortSongsDuration_ms;
     }
 }
