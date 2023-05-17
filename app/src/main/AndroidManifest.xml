@@ -19,7 +19,7 @@
         <!-- 模块描述，显示在xposed模块列表那里第二行 -->
         <meta-data
             android:name="xposeddescription"
-            android:value="网易云音乐自定义MOD" />
+            android:value="CloudMusic自定义MOD" />
         <!-- 最低xposed版本号(lib文件名可知) -->
         <meta-data
             android:name="xposedminversion"
