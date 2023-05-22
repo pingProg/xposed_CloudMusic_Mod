@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CloudMusicMod"
-        tools:targetApi="31" >
+        tools:targetApi="31">
         <!-- 是否是xposed模块，xposed根据这个来判断是否是模块 -->
         <meta-data
             android:name="xposedmodule"
@@ -29,7 +29,10 @@
         <provider
             android:name=".DataContentProvider"
             android:authorities="com.ping.cloudmusicmod.provider"
-            android:exported="true" />
+            android:enabled="true"
+            android:exported="false"
+            android:grantUriPermissions="true">
+        </provider>
     </application>
 
 </manifest>

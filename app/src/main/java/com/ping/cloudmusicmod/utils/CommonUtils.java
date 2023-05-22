@@ -3,6 +3,7 @@ package com.ping.cloudmusicmod.utils;
 import android.util.Log;
 
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 
 public class CommonUtils {
     public static void LogDebug(String msg) {
@@ -20,9 +21,12 @@ public class CommonUtils {
         XposedBridge.log(msg);
     }
 
-    public static void LogError(String msg) {
+    public static void LogError(String msg, Exception e) {
         Log.e("CLOUD_MUSIC_MOD", msg);
         XposedBridge.log(msg);
+        if(e != null){
+            XposedBridge.log(e);
+        }
     }
 
     private static void printStackTrace() throws Throwable {

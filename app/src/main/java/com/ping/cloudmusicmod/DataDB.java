@@ -29,7 +29,7 @@ public class DataDB {
             }
             cursor.close();
         } else {
-            LogError(String.format("!!!! error"));
+            LogError(String.format("!!!! error"), null);
         }
     }
 
@@ -99,7 +99,7 @@ public class DataDB {
             if (ret) {
                 LogDebug(String.format("UPDATE : %s %s", key, value));
             } else {
-                LogError("ERROR : 更新了多个键值对，可能发生了错误！");
+                LogError("ERROR : 更新了多个键值对，可能发生了错误！", null);
             }
             return uri;
         } else {

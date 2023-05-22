@@ -41,7 +41,13 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
-    compileOnly  files('libs\\XposedBridgeAPI-89.jar')
+    compileOnly  files('libs/XposedBridgeAPI-89.jar')
+    implementation 'com.google.code.gson:gson:2.10.1'
+//    implementation 'androidx.datastore:datastore-preferences:1.0.0'
+//    // optional - RxJava2 support
+//    implementation("androidx.datastore:datastore-preferences-rxjava2:1.0.0")
+//    // optional - RxJava3 support
+//    implementation("androidx.datastore:datastore-preferences-rxjava3:1.0.0")
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

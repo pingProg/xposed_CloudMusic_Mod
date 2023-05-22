@@ -19,4 +19,9 @@ public class DataDBContract {
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_KEY = "_key";
     public static final String COLUMN_VALUE = "value";
+
+    // 防止实例化
+    private DataDBContract() {
+
+    }
 }
