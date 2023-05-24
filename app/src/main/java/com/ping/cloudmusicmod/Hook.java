@@ -9,13 +9,17 @@ import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogError;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogTemp;
+import static com.ping.cloudmusicmod.utils.CommonUtils.getCurrentProcessName;
+import static com.ping.cloudmusicmod.utils.CommonUtils.makeToast;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.KeyPlayPause;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.KeyPrevious;
+import static com.ping.cloudmusicmod.utils.PlayerUtils.getDuration_ms;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.isShortSongs;
 
-import android.app.AndroidAppHelper;
 import android.app.Application;
-import android.widget.Toast;
+import android.content.Context;
+
+import java.util.Objects;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -24,41 +28,48 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class Hook implements IXposedHookLoadPackage {
-    private DataStoreApi data = null;
+    DataStoreApi data = null;
+    boolean isHookedMainActivity = false;
+    boolean isHookedPlayerService = false;
+
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         if (!loadPackageParam.packageName.equals("com.netease.cloudmusic")) {
             return;
         }
 
-        ClassLoader classLoader = loadPackageParam.classLoader;
-
-        enhanceHook(this::handler_printClickFunction, classLoader);
-        enhanceHook(this::handler_monitorPlayButton, classLoader);
-        enhanceHook(this::handler_moduleToggle, classLoader);
-//        enhanceHook(this::handler_playNext, classLoader);
-//        enhanceHook(this::handler_playPrev, classLoader);
-
-        handler_playNext(classLoader);
-        handler_playPrev(classLoader);
-
-        LogInfo("所有HOOK完成");
-    }
-
-    @FunctionalInterface
-    interface Operation {
-        void execute(ClassLoader classLoader);
-    }
-
-    // NOTE 参考：https://forum.butian.net/share/2248
-    public static void enhanceHook(Operation operation, ClassLoader classLoader) {
-        Class<?> ActivityThread = XposedHelpers.findClass("android.app.ActivityThread", classLoader);
-        XposedBridge.hookAllMethods(ActivityThread, "performLaunchActivity", new XC_MethodHook() {
+        // NOTE 此处实现破解APP加固的HOOK，attach context后的就是没有加固的ClassLoader
+        XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
-                Application mInitialApplication = (Application) XposedHelpers.getObjectField(param.thisObject, "mInitialApplication");
-                ClassLoader finalClassloader = mInitialApplication.getClassLoader();
-                operation.execute(finalClassloader);
+                Context context = (Context) param.args[0];
+                ClassLoader classLoader = context.getClassLoader();
+                String processName = getCurrentProcessName(context);
+                LogInfo("#### 进程名称： " + processName);
+
+                // NOTE
+                // 问题：启动app时，创建一个进程，会触发两次handleLoadPackage(...)函数，所以会出现hook两次函数的问题
+                // 解决：因为两次handleLoadPackage函数是在同一个进程中，所以局部变量共享，可以用局部变量记录是否已hook
+                // 注意：不同进程的局部变量不共享
+                if (Objects.equals(processName, "com.netease.cloudmusic") && !isHookedMainActivity) {
+                    isHookedMainActivity = true;
+                    LogInfo("#### HOOK 主进程（界面） : com.netease.cloudmusic");
+                    // 初始化Data文件
+                    data = DataStoreApi.getInstance();
+                    data.resetForInit();
+
+                    handler_printClickFunction(classLoader);
+//                    handler_monitorPlayButton(classLoader);
+                    handler_moduleToggle(classLoader);
+                }
+
+                if (Objects.equals(processName, "com.netease.cloudmusic:play") && !isHookedPlayerService) {
+                    isHookedPlayerService = true;
+                    LogInfo("#### HOOK 播放服务service : com.netease.cloudmusic:play");
+                    data = DataStoreApi.getInstance();
+                    handler_playNext(classLoader);
+                    handler_playPrev(classLoader);
+                }
             }
         });
     }
@@ -67,8 +78,8 @@ public class Hook implements IXposedHookLoadPackage {
         Class<?> c = XposedHelpers.findClass("android.view.View", classLoader);
         XposedBridge.hookAllMethods(c, "performClick", new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
                 Object listenerInfoObject = XposedHelpers.getObjectField(param.thisObject, "mListenerInfo");
                 Object mOnClickListenerObject = XposedHelpers.getObjectField(listenerInfoObject, "mOnClickListener");
                 String callbackType = mOnClickListenerObject.getClass().getName();
@@ -78,27 +89,28 @@ public class Hook implements IXposedHookLoadPackage {
     }
 
     public void handler_monitorPlayButton(ClassLoader classLoader) {
-        Class<?> c = XposedHelpers.findClass("com.netease.cloudmusic.activity.p7", classLoader);
-        XposedHelpers.findAndHookMethod(c, "m7", android.view.View.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.w4", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+            }
+
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 super.afterHookedMethod(param);
                 LogDebug("---- ---- PLAY BUTTON");
-                data = DataStoreApi.getInstance();
             }
         });
     }
 
     public void handler_moduleToggle(ClassLoader classLoader) {
-        Class<?> c = XposedHelpers.findClass("com.netease.cloudmusic.activity.p7", classLoader);
-        //NOTE : 监控播放器右上角“投屏”按钮
-        XposedHelpers.findAndHookMethod(c, "k7", android.view.View.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.u4", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
                 data.setToggle(!data.getToggle());
-                data.resetPlayingData();
-                Toast.makeText(AndroidAppHelper.currentApplication(), String.format("xposed模块功能：%s", data.getToggle() ? "开启" : "关闭"), Toast.LENGTH_LONG).show();
+                data.resetPlayingDataToInit();
+                makeToast(String.format("xposed模块功能：%s", data.getToggle() ? "开启" : "关闭"));
             }
         });
     }
@@ -109,13 +121,12 @@ public class Hook implements IXposedHookLoadPackage {
         // [所有next逻辑都需要调用] public void next(boolean z, boolean z2, @Nullable MusicEndConfig musicEndConfig)
         // public void next()也会调用一次public void next(boolean z, boolean z2, @Nullable MusicEndConfig musicEndConfig)，
         // 所以需要按照参数个数区分开来
-        Class<?> c = null;
+        Class<?> c;
         try {
             c = classLoader.loadClass("com.netease.cloudmusic.service.PlayService");
         } catch (ClassNotFoundException e) {
-            LogError("", e);
+            throw new RuntimeException(e);
         }
-        assert c != null;
         XposedBridge.hookAllMethods(c, "next", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -215,6 +226,7 @@ public class Hook implements IXposedHookLoadPackage {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
+                //DataStoreApi data = DataStoreApi.getInstance();
                 if (!data.getToggle()) {
                     return;
                 }

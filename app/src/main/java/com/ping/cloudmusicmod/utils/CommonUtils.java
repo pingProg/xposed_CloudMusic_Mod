@@ -1,6 +1,10 @@
 package com.ping.cloudmusicmod.utils;
 
+import android.app.ActivityManager;
+import android.app.AndroidAppHelper;
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
@@ -29,7 +33,7 @@ public class CommonUtils {
         }
     }
 
-    private static void printStackTrace() throws Throwable {
+    public static void printStackTrace() throws Throwable {
         Throwable ex = new Throwable();
         StackTraceElement[] stackElements = ex.getStackTrace();
         LogDebug("{{{{ {{{{ {{{{ STACK TRACK");
@@ -38,5 +42,24 @@ public class CommonUtils {
             LogDebug("at " + element.getClassName() + "." + element.getMethodName() + "(" + element.getFileName() + ":" + element.getLineNumber() + ")");
         }
         LogDebug("}}}} }}}} }}}} STACK TRACK");
+    }
+
+    public static void makeToast(String msg) {
+        Toast.makeText(AndroidAppHelper.currentApplication(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public static String getCurrentProcessName(Context context) {
+        int pid = android.os.Process.myPid();
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+
+        if (activityManager != null) {
+            for (ActivityManager.RunningAppProcessInfo processInfo : activityManager.getRunningAppProcesses()) {
+                if (processInfo.pid == pid) {
+                    return processInfo.processName;
+                }
+            }
+        }
+
+        return null;
     }
 }

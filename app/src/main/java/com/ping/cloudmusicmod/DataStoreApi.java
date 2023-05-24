@@ -1,18 +1,18 @@
 package com.ping.cloudmusicmod;
 
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 
 import com.google.gson.Gson;
 
 public class DataStoreApi {
-    private static DataStoreApi instance;
+    private static com.ping.cloudmusicmod.DataStoreApi instance;
     private static final String jsonFileName = "modData";
-    private JsonApi api;
+    private final JsonApi api;
 
     // 私有构造方法，防止外部实例化
     private DataStoreApi() {
         api = new JsonApi(jsonFileName);
-        resetForInit();
     }
 
     // 提供静态方法返回实例
@@ -26,9 +26,14 @@ public class DataStoreApi {
     public void resetForInit() {
         DataStoreContract d = new DataStoreContract(DataStoreContract.VALUE_INIT_REPLAY, DataStoreContract.VALUE_INIT_TOGGLE);
         api.writeJson(new Gson().toJson(d));
+        LogInfo("Data初始化");
     }
 
     public void resetPlayingData() {
+        api.set(DataStoreContract.KEY_REPLAY, DataStoreContract.REP_FALSE);
+    }
+
+    public void resetPlayingDataToInit() {
         api.set(DataStoreContract.KEY_REPLAY, DataStoreContract.VALUE_INIT_REPLAY);
     }
 

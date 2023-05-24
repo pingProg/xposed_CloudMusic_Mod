@@ -36,14 +36,17 @@ public class PlayerUtils {
         return (int) XposedHelpers.callStaticMethod(c, "getCurrentTime");
     }
 
-    private static int getDuration_ms(ClassLoader classLoader) throws Throwable {
-        // NOTE : 使用反射，获取java的私有成员变量
+    public static int getDuration_ms(ClassLoader classLoader) throws Throwable {
+        // NOTE 示例：主动调用静态static函数
         Class c = XposedHelpers.findClass("com.netease.cloudmusic.service.PlayService", classLoader);
         Object returnObjectOfInvoke = XposedHelpers.callStaticMethod(c, "getPlayingMusicInfo");
-        Field fieldOfPrivateVariable = returnObjectOfInvoke.getClass().getDeclaredField("duration");
-        fieldOfPrivateVariable.setAccessible(true);
-        Object privateVariable = fieldOfPrivateVariable.get(returnObjectOfInvoke);
-        return (int) privateVariable;
+        return (int) XposedHelpers.callMethod(returnObjectOfInvoke, "getDuration");
+    }
+
+    public static int getDuration_ms(Object playerClassObject) throws Throwable  {
+        // NOTE 示例：主动调用object对象的成员函数
+        Object musicInfo = XposedHelpers.callMethod(playerClassObject, "getCurrentMusic");
+        return (int) XposedHelpers.callMethod(musicInfo, "getDuration");
     }
 
 //    private boolean isPlayFinished() throws Throwable {

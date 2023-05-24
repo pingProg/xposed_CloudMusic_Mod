@@ -1,6 +1,9 @@
 package com.ping.cloudmusicmod;
 
-import static com.ping.cloudmusicmod.utils.CommonUtils.LogError;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
+import static com.ping.cloudmusicmod.utils.CommonUtils.LogTemp;
+
+import android.os.Environment;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,13 +16,16 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class JsonApi {
-    private File file;
+    private final File file;
 
-    public JsonApi(String jsonfFileName) {
-        try {
-            file = File.createTempFile(jsonfFileName, null);
-        } catch (IOException e) {
-            LogError("DataStoreJsonApi单例初始化错误", e);
+    public JsonApi(String jsonFileName) {
+        String tempFilePath = Environment.getExternalStorageDirectory().getPath() + File.separator + jsonFileName;
+        LogTemp("mod运行数据文件路径：" + tempFilePath);
+        file = new File(tempFilePath);
+        if (!file.exists()) {
+            LogInfo("mod运行数据文件不存在-》创建");
+        } else {
+            LogInfo("mod运行数据文件已存在");
         }
     }
 
