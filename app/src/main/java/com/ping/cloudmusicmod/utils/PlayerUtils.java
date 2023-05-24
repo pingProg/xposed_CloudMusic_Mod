@@ -23,6 +23,16 @@ public class PlayerUtils {
         audioManager.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
     }
 
+    public static void pause(Object playerObject) {
+        LogInfo("主动调用player的pause暂停");
+        XposedHelpers.callMethod(playerObject, "pause");
+    }
+
+    public static void prev(Object playerObject) {
+        LogInfo("主动调用player的prev上一曲");
+        XposedHelpers.callMethod(playerObject, "prev");
+    }
+
     public static void KeyPrevious() throws Throwable {
         LogInfo("模拟点击：上一曲");
         Context context = (Context) AndroidAppHelper.currentApplication();
@@ -43,9 +53,9 @@ public class PlayerUtils {
         return (int) XposedHelpers.callMethod(returnObjectOfInvoke, "getDuration");
     }
 
-    public static int getDuration_ms(Object playerClassObject) throws Throwable  {
+    public static int getDuration_ms(Object playerObject) throws Throwable  {
         // NOTE 示例：主动调用object对象的成员函数
-        Object musicInfo = XposedHelpers.callMethod(playerClassObject, "getCurrentMusic");
+        Object musicInfo = XposedHelpers.callMethod(playerObject, "getCurrentMusic");
         return (int) XposedHelpers.callMethod(musicInfo, "getDuration");
     }
 

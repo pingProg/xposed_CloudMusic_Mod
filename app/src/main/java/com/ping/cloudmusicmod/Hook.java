@@ -15,6 +15,8 @@ import static com.ping.cloudmusicmod.utils.PlayerUtils.KeyPlayPause;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.KeyPrevious;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.getDuration_ms;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.isShortSongs;
+import static com.ping.cloudmusicmod.utils.PlayerUtils.pause;
+import static com.ping.cloudmusicmod.utils.PlayerUtils.prev;
 
 import android.app.Application;
 import android.content.Context;
@@ -197,9 +199,11 @@ public class Hook implements IXposedHookLoadPackage {
                     }
 
                     if (isNeedReplay) {
-                        KeyPrevious();
+//                        KeyPrevious();
+                        prev(param.thisObject);
                     } else {
-                        KeyPlayPause();
+//                        KeyPlayPause();
+                        pause(param.thisObject);
                     }
                 } else {
                     //所有next逻辑
@@ -226,7 +230,6 @@ public class Hook implements IXposedHookLoadPackage {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                //DataStoreApi data = DataStoreApi.getInstance();
                 if (!data.getToggle()) {
                     return;
                 }
