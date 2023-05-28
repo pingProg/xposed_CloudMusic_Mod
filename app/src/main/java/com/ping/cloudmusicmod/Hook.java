@@ -114,52 +114,51 @@ public class Hook implements IXposedHookLoadPackage {
     //    }
 
     public void handler_moduleToggle(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.v7$s", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.module.hint.view.PlayerShareView$e", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
+            protected Object replaceHookedMethod(MethodHookParam param) {
                 data.setToggle(!data.getToggle());
                 data.resetPlayingDataToInit();
                 makeToastShortTime(String.format("xposed MOD功能：%s", data.getToggle() ? "开启" : "关闭"));
+                return null;
             }
         });
     }
 
     public void handler_showDataInfo(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.module.hint.view.PlayerShareView$e", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("androidx.appcompat.widget.ToolbarWidgetWrapper$1", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
+            protected Object replaceHookedMethod(MethodHookParam param) {
                 boolean toggle = data.getToggle();
                 @SuppressLint("DefaultLocale") String msg = toggle ? String.format("MOD：开，replay：%s，replayTimes：%d", data.getReplay(), data.getRepTimes()) : "MOD：关";
                 makeToastLongTime(msg);
+                return null;
             }
         });
     }
 
     public void handler_replayCountIncrease(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.PlayerActivity$h", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.PlayerActivity$h", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
+            protected Object replaceHookedMethod(MethodHookParam param) {
                 if (!data.getToggle()) {
-                    return;
+                    return null;
                 }
 
                 int repTimes = data.getRepTimes() + 1;
                 data.setRepTimes(repTimes);
                 makeToastShortTime("重播次数+1 ：" + repTimes);
+                return null;
             }
         });
     }
 
     public void handler_replayCountDecrease(ClassLoader classLoader) {
-        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.u4", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.u4", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
+            protected Object replaceHookedMethod(MethodHookParam param) {
                 if (!data.getToggle()) {
-                    return;
+                    return null;
                 }
 
                 int repTimes = data.getRepTimes() - 1;
@@ -170,6 +169,7 @@ public class Hook implements IXposedHookLoadPackage {
                     data.setRepTimes(repTimes);
                     makeToastShortTime("重播次数-1 ：" + repTimes);
                 }
+                return null;
             }
         });
     }
