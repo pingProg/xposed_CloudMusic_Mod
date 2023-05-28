@@ -1,5 +1,12 @@
 package com.ping.cloudmusicmod;
 
+import static com.ping.cloudmusicmod.DataStoreContract.KEY_REPLAY;
+import static com.ping.cloudmusicmod.DataStoreContract.KEY_REP_TIMES;
+import static com.ping.cloudmusicmod.DataStoreContract.KEY_TOGGLE;
+import static com.ping.cloudmusicmod.DataStoreContract.REP_FALSE;
+import static com.ping.cloudmusicmod.DataStoreContract.VALUE_INIT_REPLAY;
+import static com.ping.cloudmusicmod.DataStoreContract.VALUE_INIT_REP_TIMES;
+import static com.ping.cloudmusicmod.DataStoreContract.VALUE_INIT_TOGGLE;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 
@@ -24,40 +31,52 @@ public class DataStoreApi {
     }
 
     public void resetForInit() {
-        DataStoreContract d = new DataStoreContract(DataStoreContract.VALUE_INIT_REPLAY, DataStoreContract.VALUE_INIT_TOGGLE);
+        DataStoreContract d = new DataStoreContract(VALUE_INIT_REPLAY, VALUE_INIT_TOGGLE, VALUE_INIT_REP_TIMES);
         api.writeJson(new Gson().toJson(d));
         LogInfo("Data初始化");
     }
 
     public void resetPlayingData() {
-        api.set(DataStoreContract.KEY_REPLAY, DataStoreContract.REP_FALSE);
+        api.set(KEY_REPLAY, REP_FALSE);
+        api.set(KEY_REP_TIMES, VALUE_INIT_REP_TIMES);
     }
 
     public void resetPlayingDataToInit() {
-        api.set(DataStoreContract.KEY_REPLAY, DataStoreContract.VALUE_INIT_REPLAY);
+        setReplay(VALUE_INIT_REPLAY);
+        setRepTimes(Integer.parseInt(VALUE_INIT_REP_TIMES));
     }
 
     public String getReplay() {
-        return get(DataStoreContract.KEY_REPLAY);
+        return get(KEY_REPLAY);
     }
 
     public void setReplay(String replay) {
-        set(DataStoreContract.KEY_REPLAY, replay);
+        set(KEY_REPLAY, replay);
     }
 
     public boolean getToggle() {
-        return Boolean.parseBoolean(get(DataStoreContract.KEY_TOGGLE));
+        return Boolean.parseBoolean(get(KEY_TOGGLE));
     }
 
     public void setToggle(boolean toggle) {
-        set(DataStoreContract.KEY_TOGGLE, String.valueOf(toggle));
+        set(KEY_TOGGLE, String.valueOf(toggle));
     }
 
-    public String get(String key) {
+    public int getRepTimes() {
+        return Integer.parseInt(get(KEY_REP_TIMES));
+    }
+
+    public void setRepTimes(int repTimes) {
+        set(KEY_REP_TIMES, String.valueOf(repTimes));
+    }
+//    public void increaseRepTimes() { setRepTimes(getRepTimes() + 1); }
+//    public void decreaseRepTimes() { setRepTimes(getRepTimes() - 1); }
+
+    private String get(String key) {
         return api.get(key);
     }
 
-    public void set(String key, String value) {
+    private void set(String key, String value) {
         api.set(key, value);
     }
 

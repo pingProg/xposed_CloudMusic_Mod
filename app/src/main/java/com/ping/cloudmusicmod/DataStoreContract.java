@@ -12,10 +12,16 @@ public class DataStoreContract {
     private String toggle;
     public static final String KEY_TOGGLE = "toggle";
     public static final String VALUE_INIT_TOGGLE = Boolean.toString(true);
+    private String repTimes;
+    public static final String KEY_REP_TIMES = "repTimes";
+    public static final String VALUE_INIT_REP_TIMES = "0";
 
-    public DataStoreContract(String replay, String toggle) {
+
+
+    public DataStoreContract(String replay, String toggle, String repTimes) {
         this.replay = replay;
         this.toggle = toggle;
+        this.repTimes = repTimes;
     }
 
     public String getReplay() {
@@ -32,5 +38,13 @@ public class DataStoreContract {
 
     public void setToggle(String toggle) {
         this.toggle = toggle;
+    }
+
+    public String getRepTimes() {
+        return repTimes;
+    }
+
+    public void setRepTimes(String repTimes) {
+        this.repTimes = repTimes;
     }
 }

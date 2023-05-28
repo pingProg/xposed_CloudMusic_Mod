@@ -28,6 +28,11 @@ public class PlayerUtils {
         XposedHelpers.callMethod(playerObject, "pause");
     }
 
+    public static void stop(Object playerObject) {
+        LogInfo("主动调用player的stop停止");
+        XposedHelpers.callMethod(playerObject, "stop");
+    }
+
     public static void prev(Object playerObject) {
         LogInfo("主动调用player的prev上一曲");
         XposedHelpers.callMethod(playerObject, "prev");
