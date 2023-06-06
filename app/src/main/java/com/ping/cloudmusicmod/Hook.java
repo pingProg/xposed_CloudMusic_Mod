@@ -30,6 +30,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class Hook implements IXposedHookLoadPackage {
     DataStoreApi data = null;
+    boolean toggleAtUiProcess = false;
     boolean isHookedMainActivity = false;
     boolean isHookedPlayerService = false;
 
@@ -58,14 +59,19 @@ public class Hook implements IXposedHookLoadPackage {
                     // 初始化Data文件
                     data = DataStoreApi.getInstance();
                     data.resetForInit();
+                    toggleAtUiProcess = true;
 
                     handler_printClickFunction(classLoader);
 //                    handler_monitorPlayButton(classLoader);
+
                     handler_moduleToggle(classLoader);
                     handler_showDataInfo(classLoader);
+
                     handler_replayCountIncrease(classLoader);
                     handler_replayCountDecrease(classLoader);
                     handler_lockScreen_replayCount(classLoader);
+
+                    handler_specialButtonClick(classLoader);
                 }
 
                 if (Objects.equals(processName, "com.netease.cloudmusic:play") && !isHookedPlayerService) {
@@ -79,13 +85,21 @@ public class Hook implements IXposedHookLoadPackage {
         });
     }
 
+    private boolean checkToggleForUi() {
+        if (!toggleAtUiProcess && data.getToggle()) {
+            makeToastShortTime("ERROR : toggle值不一致，需要debug");
+            return false;
+        }
+        return toggleAtUiProcess;
+    }
+
     public void handler_printClickFunction(ClassLoader classLoader) {
         Class<?> c = XposedHelpers.findClass("android.view.View", classLoader);
         XposedBridge.hookAllMethods(c, "performClick", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                if (!data.getToggle()) {
+                if (!checkToggleForUi()) {
                     return;
                 }
 
@@ -118,8 +132,12 @@ public class Hook implements IXposedHookLoadPackage {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
                 data.setToggle(!data.getToggle());
+                toggleAtUiProcess = !toggleAtUiProcess;
+
                 data.resetPlayingDataToInit();
+
                 makeToastShortTime(String.format("xposed MOD功能：%s", data.getToggle() ? "开启" : "关闭"));
+
                 return null;
             }
         });
@@ -141,7 +159,7 @@ public class Hook implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.PlayerActivity$h", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
-                if (!data.getToggle()) {
+                if (!checkToggleForUi()) {
                     return null;
                 }
 
@@ -157,7 +175,7 @@ public class Hook implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.u4", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
-                if (!data.getToggle()) {
+                if (!checkToggleForUi()) {
                     return null;
                 }
 
@@ -179,7 +197,7 @@ public class Hook implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.LockScreenActivity$i", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
-                if (!data.getToggle()) {
+                if (!checkToggleForUi()) {
                     return null;
                 }
 
@@ -191,6 +209,57 @@ public class Hook implements IXposedHookLoadPackage {
         });
     }
 
+    public void handler_specialButtonClick(ClassLoader classLoader) {
+        handler_musicListItemClick(classLoader);
+        handler_historyListItemClick(classLoader);
+        handler_playAllButtonCLick(classLoader);
+    }
+
+    public void handler_musicListItemClick(ClassLoader classLoader) {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.ui.component.songitem.DefaultMusicListHostImpl$1", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                if (!checkToggleForUi()) {
+                    return;
+                }
+
+                LogInfo("点击常规列表，reset");
+                data.resetPlayingData();
+            }
+        });
+    }
+
+    public void handler_historyListItemClick(ClassLoader classLoader) {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.module.playerlisthistory.m3", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                if (!checkToggleForUi()) {
+                    return;
+                }
+
+                LogInfo("点击右下角列表，reset");
+                data.resetPlayingData();
+            }
+        });
+    }
+
+    public void handler_playAllButtonCLick(ClassLoader classLoader) {
+        XposedHelpers.findAndHookConstructor("com.netease.cloudmusic.fragment.PlayListFragment", classLoader, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                if (!checkToggleForUi()) {
+                    return;
+                }
+
+                makeToastShortTime("测试：点击全部播放按钮，reset");
+                LogInfo("点击全部播放按钮，reset");
+                data.resetPlayingData();
+            }
+        });
+    }
 
     public void handler_playNext(ClassLoader classLoader) {
         // HOOK的方法：
