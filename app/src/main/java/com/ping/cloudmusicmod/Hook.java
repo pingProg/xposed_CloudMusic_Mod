@@ -11,6 +11,7 @@ import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 import static com.ping.cloudmusicmod.utils.CommonUtils.getCurrentProcessName;
 import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastLongTime;
 import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastShortTime;
+import static com.ping.cloudmusicmod.utils.CommonUtils.vibrateShort;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.isShortSongs;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.prev;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.stop;
@@ -62,7 +63,6 @@ public class Hook implements IXposedHookLoadPackage {
                     toggleAtUiProcess = true;
 
                     handler_printClickFunction(classLoader);
-//                    handler_monitorPlayButton(classLoader);
 
                     handler_moduleToggle(classLoader);
                     handler_showDataInfo(classLoader);
@@ -71,7 +71,7 @@ public class Hook implements IXposedHookLoadPackage {
                     handler_replayCountDecrease(classLoader);
                     handler_lockScreen_replayCount(classLoader);
 
-                    handler_specialButtonClick(classLoader);
+                    handler_changeTrackButtonClick(classLoader);
                 }
 
                 if (Objects.equals(processName, "com.netease.cloudmusic:play") && !isHookedPlayerService) {
@@ -81,7 +81,6 @@ public class Hook implements IXposedHookLoadPackage {
                     handler_playNext(classLoader);
                     handler_playPrev(classLoader);
                     handler_nextGaplessMusic(classLoader);
-//                    handler_PlayDataSource(classLoader);
                 }
             }
         });
@@ -121,6 +120,7 @@ public class Hook implements IXposedHookLoadPackage {
                 toggleAtUiProcess = !toggleAtUiProcess;
                 data.resetPlayingDataToInit();
                 makeToastShortTime(String.format("xposed MOD功能：%s", data.getToggle() ? "开启" : "关闭"));
+                vibrateShort();
 
                 return null;
             }
@@ -134,6 +134,7 @@ public class Hook implements IXposedHookLoadPackage {
                 boolean toggle = data.getToggle();
                 @SuppressLint("DefaultLocale") String msg = toggle ? String.format("MOD：开，replay：%s，replayTimes：%d", data.getReplay(), data.getRepTimes()) : "MOD：关";
                 makeToastLongTime(msg);
+                vibrateShort();
                 return null;
             }
         });
@@ -149,6 +150,7 @@ public class Hook implements IXposedHookLoadPackage {
 
                 data.increaseRepTimes();
                 makeToastShortTime("重播次数+1 ：" + data.getRepTimes());
+                vibrateShort();
                 return null;
             }
         });
@@ -169,6 +171,7 @@ public class Hook implements IXposedHookLoadPackage {
                     data.decreaseRepTimes();
                     makeToastShortTime("重播次数-1 ：" + data.getRepTimes());
                 }
+                vibrateShort();
                 return null;
             }
         });
@@ -185,12 +188,13 @@ public class Hook implements IXposedHookLoadPackage {
 
                 data.increaseRepTimes();
                 makeToastShortTime("重播次数+1 ：" + data.getRepTimes());
+                vibrateShort();
                 return null;
             }
         });
     }
 
-    public void handler_specialButtonClick(ClassLoader classLoader) {
+    public void handler_changeTrackButtonClick(ClassLoader classLoader) {
         handler_musicListItemClick(classLoader);
         handler_historyListItemClick(classLoader);
         handler_playAllButtonCLick(classLoader);

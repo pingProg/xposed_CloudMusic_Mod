@@ -3,6 +3,8 @@ package com.ping.cloudmusicmod.utils;
 import android.app.ActivityManager;
 import android.app.AndroidAppHelper;
 import android.content.Context;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -88,6 +90,21 @@ public class CommonUtils {
         makeToastShortTime(msg);
     }
 
+    public static void vibrateShort() {
+        // 获取震动服务
+        Vibrator vibrator = (Vibrator) getContextQuick().getSystemService(Context.VIBRATOR_SERVICE);
+        // 判断设备是否支持震动
+        if (vibrator.hasVibrator()) {
+            // 停止震动
+            vibrator.cancel();
+            // 定义震动模式
+            // 这里以简单的震动模式为例，可根据需求定义自己的震动模式
+            VibrationEffect vibrationEffect = VibrationEffect.createOneShot(40, 128);
+            // 开始震动
+            vibrator.vibrate(vibrationEffect);
+        }
+    }
+
     public static String getCurrentProcessName(Context context) {
         int pid = android.os.Process.myPid();
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
@@ -101,5 +118,9 @@ public class CommonUtils {
         }
 
         return null;
+    }
+
+    public static Context getContextQuick() {
+        return (Context) AndroidAppHelper.currentApplication();
     }
 }
