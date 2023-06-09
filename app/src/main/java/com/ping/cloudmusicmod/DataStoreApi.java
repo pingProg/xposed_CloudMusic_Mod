@@ -39,6 +39,7 @@ public class DataStoreApi {
     public void resetPlayingData() {
         api.set(KEY_REPLAY, REP_FALSE);
         api.set(KEY_REP_TIMES, VALUE_INIT_REP_TIMES);
+        LogInfo("Data重置");
     }
 
     public void resetPlayingDataToInit() {
@@ -66,11 +67,20 @@ public class DataStoreApi {
         return Integer.parseInt(get(KEY_REP_TIMES));
     }
 
-    public void setRepTimes(int repTimes) {
+    private void setRepTimes(int repTimes) {
         set(KEY_REP_TIMES, String.valueOf(repTimes));
     }
-//    public void increaseRepTimes() { setRepTimes(getRepTimes() + 1); }
-//    public void decreaseRepTimes() { setRepTimes(getRepTimes() - 1); }
+    public void increaseRepTimes() {
+        setRepTimes(getRepTimes() + 1);
+        LogInfo("repTimes : + 1");
+    }
+    public void decreaseRepTimes() {
+        setRepTimes(getRepTimes() - 1);
+        LogInfo("repTimes : - 1");
+    }
+    public void setRepTimesToZero() { setRepTimes(0); }
+    @SuppressWarnings("unused")
+    public void setRepTimesTo1() { setRepTimes(1); }
 
     private String get(String key) {
         return api.get(key);
@@ -80,6 +90,7 @@ public class DataStoreApi {
         api.set(key, value);
     }
 
+    @SuppressWarnings("unused")
     public void debugPrint() {
         LogDebug(api.readJson());
     }

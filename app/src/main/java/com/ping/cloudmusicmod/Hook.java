@@ -9,9 +9,8 @@ import static com.ping.cloudmusicmod.utils.CommonUtils.LogDebug;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogError;
 import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 import static com.ping.cloudmusicmod.utils.CommonUtils.getCurrentProcessName;
-import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastShortTime;
 import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastLongTime;
-import static com.ping.cloudmusicmod.utils.CommonUtils.printStackTrace;
+import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastShortTime;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.isShortSongs;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.prev;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.stop;
@@ -34,7 +33,7 @@ public class Hook implements IXposedHookLoadPackage {
     boolean toggleAtUiProcess = false;
     boolean isHookedMainActivity = false;
     boolean isHookedPlayerService = false;
-
+    boolean isReplayForTimes = false;
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         if (!loadPackageParam.packageName.equals("com.netease.cloudmusic")) {
@@ -82,6 +81,7 @@ public class Hook implements IXposedHookLoadPackage {
                     handler_playNext(classLoader);
                     handler_playPrev(classLoader);
                     handler_nextGaplessMusic(classLoader);
+//                    handler_PlayDataSource(classLoader);
                 }
             }
         });
@@ -147,9 +147,8 @@ public class Hook implements IXposedHookLoadPackage {
                     return null;
                 }
 
-                int repTimes = data.getRepTimes() + 1;
-                data.setRepTimes(repTimes);
-                makeToastShortTime("重播次数+1 ：" + repTimes);
+                data.increaseRepTimes();
+                makeToastShortTime("重播次数+1 ：" + data.getRepTimes());
                 return null;
             }
         });
@@ -163,13 +162,12 @@ public class Hook implements IXposedHookLoadPackage {
                     return null;
                 }
 
-                int repTimes = data.getRepTimes() - 1;
-                if (repTimes < 0) {
-                    data.setRepTimes(0);
+                if (data.getRepTimes() < 0) {
+                    data.setRepTimesToZero();
                     makeToastShortTime("重播次数-1 ：0");
                 } else {
-                    data.setRepTimes(repTimes);
-                    makeToastShortTime("重播次数-1 ：" + repTimes);
+                    data.decreaseRepTimes();
+                    makeToastShortTime("重播次数-1 ：" + data.getRepTimes());
                 }
                 return null;
             }
@@ -185,9 +183,8 @@ public class Hook implements IXposedHookLoadPackage {
                     return null;
                 }
 
-                int repTimes = data.getRepTimes() + 1;
-                data.setRepTimes(repTimes);
-                makeToastShortTime("重播次数+1 ：" + repTimes);
+                data.increaseRepTimes();
+                makeToastShortTime("重播次数+1 ：" + data.getRepTimes());
                 return null;
             }
         });
@@ -238,7 +235,6 @@ public class Hook implements IXposedHookLoadPackage {
                     return;
                 }
 
-                makeToastShortTime("测试：点击全部播放按钮，reset");
                 LogInfo("点击全部播放按钮，reset");
                 data.resetPlayingData();
             }
@@ -265,7 +261,10 @@ public class Hook implements IXposedHookLoadPackage {
                 if (!data.getToggle()) {
                     return;
                 }
-                beforeNext(classLoader, param);
+                //自然完成播放
+                if (param.args.length == 0) {
+                    beforeNext_playFinish(classLoader);
+                }
             }
 
             @Override
@@ -274,7 +273,17 @@ public class Hook implements IXposedHookLoadPackage {
                 if (!data.getToggle()) {
                     return;
                 }
-                afterNext(param);
+                if (param.args.length == 0) {
+                    afterNext_playFinish(param);
+                } else {
+                    String replayStatus = data.getReplay();
+                    //所有next逻辑
+                    LogDebug(String.format("next(监听所有next): 准备判断下一步的操作 : isReplay : %s", replayStatus));
+                    if (replayStatus.equals(REP_REPLAYED)) {
+                        LogInfo("不是通过自然播放完成 切换到下一曲，所以重置data");
+                        data.resetPlayingData();
+                    }
+                }
             }
         });
     }
@@ -299,21 +308,14 @@ public class Hook implements IXposedHookLoadPackage {
         });
     }
 
-    private void beforeNext(ClassLoader classLoader, XC_MethodHook.MethodHookParam param) throws Throwable {
-        //自然完成播放
-        if (param.args.length == 0) {
-            beforeNext_playFinish(classLoader);
-        }
-    }
-
-    private void beforeNext_playFinish(ClassLoader classLoader) throws Throwable {
+    private void beforeNext_playFinish(ClassLoader classLoader) {
         String replayStatus = data.getReplay();
         LogInfo(String.format("next：自然完成播放, isReplay：%s", replayStatus));
         int repTimes = data.getRepTimes();
         if (repTimes > 0) {                         // 判断replayTimes的逻辑
             LogInfo("next: 剩余重播次数：" + repTimes);
-            data.setReplay(REP_TRUE);
-            data.setRepTimes(repTimes - 1);
+            isReplayForTimes = true;
+            data.decreaseRepTimes();
         } else if (isShortSongs(classLoader)) {     // 判断短曲replay的逻辑
             LogInfo("next: 较短的曲目");
             // 第一次启动时的shortSongs默认重放
@@ -340,40 +342,32 @@ public class Hook implements IXposedHookLoadPackage {
         }
     }
 
-    private void afterNext(XC_MethodHook.MethodHookParam param) {
-        if (param.args.length == 0) {
-            afterNext_playFinish(param);
-        } else {
-            String replayStatus = data.getReplay();
-            //所有next逻辑
-            LogDebug(String.format("next(监听所有next): 准备判断下一步的操作 : isReplay : %s", replayStatus));
-            if (replayStatus.equals(REP_REPLAYED)) {
-                LogInfo("不是通过自然播放完成 切换到下一曲，所以重置data");
-                data.resetPlayingData();
-            }
-        }
-    }
-
     private void afterNext_playFinish(XC_MethodHook.MethodHookParam param) {
         String replayStatus = data.getReplay();
         //自然完成播放
         LogDebug(String.format("next(自然完成播放): 准备判断下一步的操作 : isReplay %s", replayStatus));
         boolean isNeedReplay = false;
-        switch (replayStatus) {
-            case REP_TRUE: {
-                LogInfo("next：下一曲准备再次播放");
-                data.setReplay(REP_WILL_REPLAY);
-                isNeedReplay = true;
-                break;
-            }
-            case REP_WILL_REPLAY:
-            case REP_FALSE:
-            case REP_INIT:
-            case REP_REPLAYED:
-            default: {
-                LogDebug("next：不需要操作，所以重置data");
-                data.resetPlayingData();
-                break;
+        if(isReplayForTimes){
+            LogInfo("next：因为replayTimes，再次播放");
+            isReplayForTimes = false;
+            isNeedReplay = true;
+        } else {
+            switch (replayStatus) {
+                case REP_TRUE: {
+                    LogInfo("next：下一曲准备再次播放");
+                    data.setReplay(REP_WILL_REPLAY);
+                    isNeedReplay = true;
+                    break;
+                }
+                case REP_WILL_REPLAY:
+                case REP_FALSE:
+                case REP_INIT:
+                case REP_REPLAYED:
+                default: {
+                    LogDebug("next：不需要操作，所以重置data");
+                    data.resetPlayingData();
+                    break;
+                }
             }
         }
 
