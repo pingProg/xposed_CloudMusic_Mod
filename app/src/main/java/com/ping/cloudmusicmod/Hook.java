@@ -11,6 +11,7 @@ import static com.ping.cloudmusicmod.utils.CommonUtils.LogInfo;
 import static com.ping.cloudmusicmod.utils.CommonUtils.getCurrentProcessName;
 import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastShortTime;
 import static com.ping.cloudmusicmod.utils.CommonUtils.makeToastLongTime;
+import static com.ping.cloudmusicmod.utils.CommonUtils.printStackTrace;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.isShortSongs;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.prev;
 import static com.ping.cloudmusicmod.utils.PlayerUtils.stop;
@@ -80,17 +81,18 @@ public class Hook implements IXposedHookLoadPackage {
                     data = DataStoreApi.getInstance();
                     handler_playNext(classLoader);
                     handler_playPrev(classLoader);
+                    handler_nextGaplessMusic(classLoader);
                 }
             }
         });
     }
 
-    private boolean checkToggleForUi() {
+    private boolean isToggleForUiDisabled() {
         if (!toggleAtUiProcess && data.getToggle()) {
             makeToastShortTime("ERROR : toggle值不一致，需要debug");
-            return false;
+            return true;
         }
-        return toggleAtUiProcess;
+        return !toggleAtUiProcess;
     }
 
     public void handler_printClickFunction(ClassLoader classLoader) {
@@ -99,7 +101,7 @@ public class Hook implements IXposedHookLoadPackage {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return;
                 }
 
@@ -111,31 +113,13 @@ public class Hook implements IXposedHookLoadPackage {
         });
     }
 
-    @SuppressWarnings("commented-out-code")
-    //    public void handler_monitorPlayButton(ClassLoader classLoader) {
-    //        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.w4", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
-    //            @Override
-    //            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-    //                super.beforeHookedMethod(param);
-    //            }
-    //
-    //            @Override
-    //            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-    //                super.afterHookedMethod(param);
-    //                LogDebug("---- ---- PLAY BUTTON");
-    //            }
-    //        });
-    //    }
-
     public void handler_moduleToggle(ClassLoader classLoader) {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.module.hint.view.PlayerShareView$e", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
                 data.setToggle(!data.getToggle());
                 toggleAtUiProcess = !toggleAtUiProcess;
-
                 data.resetPlayingDataToInit();
-
                 makeToastShortTime(String.format("xposed MOD功能：%s", data.getToggle() ? "开启" : "关闭"));
 
                 return null;
@@ -159,7 +143,7 @@ public class Hook implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.PlayerActivity$h", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return null;
                 }
 
@@ -175,7 +159,7 @@ public class Hook implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.u4", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return null;
                 }
 
@@ -197,7 +181,7 @@ public class Hook implements IXposedHookLoadPackage {
         XposedHelpers.findAndHookMethod("com.netease.cloudmusic.activity.LockScreenActivity$i", classLoader, "onClick", android.view.View.class, new XC_MethodReplacement() {
             @Override
             protected Object replaceHookedMethod(MethodHookParam param) {
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return null;
                 }
 
@@ -220,7 +204,7 @@ public class Hook implements IXposedHookLoadPackage {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return;
                 }
 
@@ -235,7 +219,7 @@ public class Hook implements IXposedHookLoadPackage {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return;
                 }
 
@@ -246,11 +230,11 @@ public class Hook implements IXposedHookLoadPackage {
     }
 
     public void handler_playAllButtonCLick(ClassLoader classLoader) {
-        XposedHelpers.findAndHookConstructor("com.netease.cloudmusic.fragment.PlayListFragment", classLoader, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.fragment.PlayListFragment", classLoader, "onClick", android.view.View.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                if (!checkToggleForUi()) {
+                if (isToggleForUiDisabled()) {
                     return;
                 }
 
@@ -281,41 +265,7 @@ public class Hook implements IXposedHookLoadPackage {
                 if (!data.getToggle()) {
                     return;
                 }
-
-                //自然完成播放
-                if (param.args.length == 0) {
-                    String replayStatus = data.getReplay();
-                    LogInfo(String.format("next：自然完成播放, isReplay：%s", replayStatus));
-                    int repTimes = data.getRepTimes();
-                    if (repTimes > 0) {                         // 判断replayTimes的逻辑
-                        LogInfo("next: 剩余重播次数：" + repTimes);
-                        data.setReplay(REP_TRUE);
-                        data.setRepTimes(repTimes - 1);
-                    } else if (isShortSongs(classLoader)) {     // 判断短曲replay的逻辑
-                        LogInfo("next: 较短的曲目");
-                        // 第一次启动时的shortSongs默认重放
-                        switch (replayStatus) {
-                            case REP_INIT: {
-                                LogInfo("next: 首次启动");
-                                data.setReplay(REP_TRUE);
-                                break;
-                            }
-                            case REP_FALSE: {
-                                LogInfo("next：设置：下一曲预订再次播放");
-                                data.setReplay(REP_TRUE);
-                                break;
-                            }
-                            case REP_REPLAYED: {
-                                LogInfo("next：上一曲完成了MOD的自动重放");
-                                break;
-                            }
-                            case REP_TRUE:
-                            case REP_WILL_REPLAY:
-                            default:
-                                LogError("!!!! ERROR : 未知错误 replay : " + data.getReplay(), null);
-                        }
-                    }
-                }
+                beforeNext(classLoader, param);
             }
 
             @Override
@@ -324,46 +274,114 @@ public class Hook implements IXposedHookLoadPackage {
                 if (!data.getToggle()) {
                     return;
                 }
-
-                String replayStatus = data.getReplay();
-                if (param.args.length == 0) {
-                    //自然完成播放
-                    LogDebug(String.format("next(自然完成播放): 准备判断下一步的操作 : isReplay %s", replayStatus));
-                    boolean isNeedReplay = false;
-                    switch (replayStatus) {
-                        case REP_TRUE: {
-                            LogInfo("next：下一曲准备再次播放");
-                            data.setReplay(REP_WILL_REPLAY);
-                            isNeedReplay = true;
-                            break;
-                        }
-                        case REP_WILL_REPLAY:
-                        case REP_FALSE:
-                        case REP_INIT:
-                        case REP_REPLAYED:
-                        default: {
-                            LogDebug("next：不需要操作，所以重置data");
-                            data.resetPlayingData();
-                            break;
-                        }
-                    }
-
-                    if (isNeedReplay) {
-                        prev(param.thisObject);
-                    } else {
-//                        pause(param.thisObject);
-                        stop(param.thisObject);
-                    }
-                } else {
-                    //所有next逻辑
-                    LogDebug(String.format("next(监听所有next): 准备判断下一步的操作 : isReplay : %s", replayStatus));
-                    if (replayStatus.equals(REP_REPLAYED)) {
-                        LogInfo("不是通过自然播放完成 切换到下一曲，所以重置data");
-                        data.resetPlayingData();
-                    }
-                }
+                afterNext(param);
             }
         });
+    }
+
+    // NOTE：当云盘的音乐自然播放完成后，程序调用的不是next()，而是nextGapless()，
+    // 可能是云盘音乐编解码的参数特殊，导致播放器判断云盘的音乐使用gapless播放，详情可以比对参考有无gapless的mp3文件的metadata
+    public void handler_nextGaplessMusic(ClassLoader classLoader) {
+        XposedHelpers.findAndHookMethod("com.netease.cloudmusic.service.PlayService", classLoader, "nextGapless", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                LogInfo("nextGaplessMusic before : 云盘音乐下一曲");
+                beforeNext_playFinish(classLoader);
+            }
+
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                super.afterHookedMethod(param);
+                LogInfo("nextGaplessMusic after : 云盘音乐下一曲");
+                afterNext_playFinish(param);
+            }
+        });
+    }
+
+    private void beforeNext(ClassLoader classLoader, XC_MethodHook.MethodHookParam param) throws Throwable {
+        //自然完成播放
+        if (param.args.length == 0) {
+            beforeNext_playFinish(classLoader);
+        }
+    }
+
+    private void beforeNext_playFinish(ClassLoader classLoader) throws Throwable {
+        String replayStatus = data.getReplay();
+        LogInfo(String.format("next：自然完成播放, isReplay：%s", replayStatus));
+        int repTimes = data.getRepTimes();
+        if (repTimes > 0) {                         // 判断replayTimes的逻辑
+            LogInfo("next: 剩余重播次数：" + repTimes);
+            data.setReplay(REP_TRUE);
+            data.setRepTimes(repTimes - 1);
+        } else if (isShortSongs(classLoader)) {     // 判断短曲replay的逻辑
+            LogInfo("next: 较短的曲目");
+            // 第一次启动时的shortSongs默认重放
+            switch (replayStatus) {
+                case REP_INIT: {
+                    LogInfo("next: 首次启动");
+                    data.setReplay(REP_TRUE);
+                    break;
+                }
+                case REP_FALSE: {
+                    LogInfo("next：设置：下一曲预订再次播放");
+                    data.setReplay(REP_TRUE);
+                    break;
+                }
+                case REP_REPLAYED: {
+                    LogInfo("next：上一曲完成了MOD的自动重放");
+                    break;
+                }
+                case REP_TRUE:
+                case REP_WILL_REPLAY:
+                default:
+                    LogError("!!!! ERROR : 未知错误 replay : " + data.getReplay(), null);
+            }
+        }
+    }
+
+    private void afterNext(XC_MethodHook.MethodHookParam param) {
+        if (param.args.length == 0) {
+            afterNext_playFinish(param);
+        } else {
+            String replayStatus = data.getReplay();
+            //所有next逻辑
+            LogDebug(String.format("next(监听所有next): 准备判断下一步的操作 : isReplay : %s", replayStatus));
+            if (replayStatus.equals(REP_REPLAYED)) {
+                LogInfo("不是通过自然播放完成 切换到下一曲，所以重置data");
+                data.resetPlayingData();
+            }
+        }
+    }
+
+    private void afterNext_playFinish(XC_MethodHook.MethodHookParam param) {
+        String replayStatus = data.getReplay();
+        //自然完成播放
+        LogDebug(String.format("next(自然完成播放): 准备判断下一步的操作 : isReplay %s", replayStatus));
+        boolean isNeedReplay = false;
+        switch (replayStatus) {
+            case REP_TRUE: {
+                LogInfo("next：下一曲准备再次播放");
+                data.setReplay(REP_WILL_REPLAY);
+                isNeedReplay = true;
+                break;
+            }
+            case REP_WILL_REPLAY:
+            case REP_FALSE:
+            case REP_INIT:
+            case REP_REPLAYED:
+            default: {
+                LogDebug("next：不需要操作，所以重置data");
+                data.resetPlayingData();
+                break;
+            }
+        }
+
+        if (isNeedReplay) {
+            prev(param.thisObject);
+        } else {
+            stop(param.thisObject);
+        }
     }
 
     public void handler_playPrev(ClassLoader classLoader) {
